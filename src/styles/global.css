@@ -89,6 +89,7 @@ nav a:hover, .footer-links a:hover { color: var(--orange); }
 .page-hero h1 { max-width: 1050px; font-size: clamp(3.4rem, 8vw, 6.7rem); }
 .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .product-card { display: block; border: 1px solid var(--line); text-decoration: none; background: #eee7dc; }
+.product-card[hidden] { display: none !important; }
 .product-card { transition: transform .2s, box-shadow .2s; }
 .product-card:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--ink); }
 .product-card img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-bottom: 1px solid var(--line); }
