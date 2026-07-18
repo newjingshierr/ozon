@@ -27,3 +27,7 @@ pnpm-debug.log*
 automation/data/
 automation/logs/
 automation/.run.lock
+
+# Python bytecode
+__pycache__/
+*.py[cod]
