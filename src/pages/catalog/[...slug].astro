@@ -33,7 +33,16 @@ const jsonLd = {
 	<article class="product-page shell">
 		<a class="back-link" href="/catalog/">← Все подборки</a>
 		<div class="product-hero">
-			<div class="product-image"><img src={data.image} alt={data.imageAlt} /></div>
+			<a
+				class="product-image product-image-link"
+				href={data.ozonUrl}
+				target="_blank"
+				rel="sponsored noopener"
+				aria-label={`${data.title} — посмотреть товар на Ozon`}
+			>
+				<img src={data.image} alt={data.imageAlt} />
+				<span class="image-link-label">Посмотреть на Ozon <span aria-hidden="true">↗</span></span>
+			</a>
 			<div class="product-intro">
 				<p class="eyebrow">ArtBox World</p>
 				<h1>{data.title}</h1>

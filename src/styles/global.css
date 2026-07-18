@@ -117,6 +117,10 @@ nav a:hover, .footer-links a:hover { color: var(--orange); }
 .product-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 68px; align-items: center; }
 .product-image { padding: 20px; border: 1px solid var(--ink); background: var(--cream); }
 .product-image img { width: 100%; aspect-ratio: 3/2; object-fit: cover; }
+.product-image-link { position: relative; display: block; color: inherit; text-decoration: none; transition: transform .2s, box-shadow .2s; }
+.product-image-link:hover { transform: translate(-3px, -3px); box-shadow: 7px 7px 0 var(--ink); }
+.product-image-link:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
+.image-link-label { position: absolute; right: 32px; bottom: 32px; padding: 10px 14px; background: var(--ink); color: var(--paper); font-size: .82rem; font-weight: 850; }
 .product-intro h1 { font-size: clamp(3.1rem, 6vw, 5.7rem); }
 .microcopy { margin-top: 15px; color: var(--muted); font-size: .84rem; }
 .article-body { max-width: 760px; margin: 90px auto; font-size: 1.08rem; }
