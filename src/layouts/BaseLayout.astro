@@ -71,6 +71,11 @@ const fullTitle = title.includes('ArtBox World') ? title : `${title} — ArtBox 
 				accurateTrackBounce: true,
 				trackLinks: true
 			});
+
+			document.addEventListener('click', function(event) {
+				var link = event.target.closest && event.target.closest('a[href*="ozon.ru"]');
+				if (link) ym(110844694, 'reachGoal', 'ozon_click', { destination: link.href });
+			});
 		</script>
 		<!-- /Yandex.Metrika counter -->
 	</head>
