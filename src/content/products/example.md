@@ -5,6 +5,9 @@ category: art
 image: "/images/example.jpg"
 imageAlt: "Пример изображения товара"
 ozonUrl: "https://www.ozon.ru/"
+shopName: "example"
+ozonSku: "0"
+soldUnits: 0
 keywords: ["пример"]
 updatedAt: 2026-07-18
 draft: true

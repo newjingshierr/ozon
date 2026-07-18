@@ -10,6 +10,9 @@ export async function getStaticPaths() {
 const { product } = Astro.props;
 const { Content } = await render(product);
 const data = product.data;
+const relatedProducts = (await getCollection('products', ({ data: item }) => !item.draft && item.category === data.category))
+	.filter((item) => item.id !== product.id)
+	.slice(0, 3);
 const canonical = new URL(Astro.url.pathname, Astro.site).toString();
 const jsonLd = {
 	'@context': 'https://schema.org',
@@ -40,6 +43,20 @@ const jsonLd = {
 			</div>
 		</div>
 		<div class="article-body"><Content /></div>
+		{relatedProducts.length > 0 && (
+			<section class="related-products" aria-labelledby="related-title">
+				<p class="eyebrow">Ещё по теме</p>
+				<h2 id="related-title">Похожие идеи для вашей стены</h2>
+				<div class="product-grid">
+					{relatedProducts.map((item) => (
+						<a class="product-card" href={`/catalog/${item.id}/`}>
+							<img src={item.data.image} alt={item.data.imageAlt} loading="lazy" />
+							<div><h3>{item.data.title}</h3><p>{item.data.description}</p></div>
+						</a>
+					))}
+				</div>
+			</section>
+		)}
 		<div class="product-cta">
 			<div><p class="eyebrow">Готово к заказу</p><h2>Добавьте характер вашему пространству</h2></div>
 			<a class="button button-secondary" href={data.ozonUrl} target="_blank" rel="sponsored noopener">Перейти на Ozon ↗</a>

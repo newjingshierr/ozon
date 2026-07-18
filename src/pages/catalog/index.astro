@@ -2,7 +2,8 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-const products = await getCollection('products', ({ data }) => !data.draft);
+const products = (await getCollection('products', ({ data }) => !data.draft))
+	.sort((a, b) => b.data.updatedAt.getTime() - a.data.updatedAt.getTime());
 const description = 'Каталог тематических флагов, постеров и картин ArtBox World с переходом к товарам на Ozon.';
 ---
 
