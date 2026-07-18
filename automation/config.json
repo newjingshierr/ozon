@@ -1,0 +1,10 @@
+{
+  "erp_root": "D:\\workspace\\xituerp",
+  "site_root": "D:\\ozo",
+  "max_new_pages_per_run": 20,
+  "image_max_width": 1600,
+  "image_quality": 86,
+  "request_timeout_seconds": 30,
+  "git_remote": "origin",
+  "git_branch": "main"
+}
