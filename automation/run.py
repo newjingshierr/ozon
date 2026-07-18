@@ -292,9 +292,14 @@ def finalize_batch(config: dict[str, Any], publish: bool) -> int:
             product_title=str(item["original_product_title"]), image_url=str(item["image_url"]),
             sold_units=int(item.get("sold_units") or 0), last_order_at=str(item.get("last_order_at") or ""),
         )
-        if item.get("action") == "rewrite":
-            slug = str(item["existing_slug"])
-            image_path = str(item["existing_image"])
+        if item.get("action") == "rewrite" or existing:
+            # Reuse the already published page when finalize is retried for the
+            # same batch. This keeps publication idempotent and avoids creating
+            # a second slug/image for an item that was originally marked "new".
+            slug = str((existing or {}).get("slug") or item.get("existing_slug"))
+            image_path = str((existing or {}).get("image") or item.get("existing_image"))
+            if not slug or slug == "None" or not image_path or image_path == "None":
+                raise ValueError(f"已有商品缺少页面路径或图片：{candidate.product_id}")
         else:
             base_slug = slugify(page.primary_keyword, candidate.product_id)
             slug = base_slug
