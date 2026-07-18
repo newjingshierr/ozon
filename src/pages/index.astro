@@ -3,10 +3,11 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CategoryCard from '../components/CategoryCard.astro';
 
-const products = (await getCollection('products', ({ data }) => !data.draft))
+const allProducts = (await getCollection('products', ({ data }) => !data.draft));
+const products = allProducts
 	.sort((a, b) => b.data.updatedAt.getTime() - a.data.updatedAt.getTime())
 	.slice(0, 6);
-const description = 'Флаги, постеры и картины по мотивам музыки, спорта, мифологии и искусства. Подборки ArtBox World с переходом к товарам на Ozon.';
+const description = 'Тематические флаги, постеры и картины для комнаты: рок, спорт, мифология и искусство. Подборки ArtBox World с прямым переходом к товарам на Ozon.';
 const jsonLd = [
 	{
 		'@context': 'https://schema.org',
@@ -23,6 +24,17 @@ const jsonLd = [
 		url: 'https://artboxworld.com/',
 		logo: 'https://artboxworld.com/favicon.svg',
 	},
+	{
+		'@context': 'https://schema.org',
+		'@type': 'ItemList',
+		name: 'Новые тематические подборки ArtBox World',
+		itemListElement: products.map((product, index) => ({
+			'@type': 'ListItem',
+			position: index + 1,
+			url: `https://artboxworld.com/catalog/${product.id}/`,
+			name: product.data.title,
+		})),
+	},
 ];
 ---
 
@@ -30,13 +42,18 @@ const jsonLd = [
 	<section class="hero">
 		<div class="shell hero-grid">
 			<div class="hero-copy">
-				<p class="eyebrow">Искусство для вашего пространства</p>
-				<h1>Стены, которые говорят <em>о вас</em></h1>
-				<p class="lead">Откройте коллекции флагов, постеров и картин по любимым темам — от рок-музыки до мифологии.</p>
+				<p class="eyebrow">Тематический декор с переходом на Ozon</p>
+				<h1>Флаги, постеры и картины <em>для вашей стены</em></h1>
+				<p class="lead">Выбирайте декор по любимой музыке, спорту, мифологии и искусству. Мы помогаем найти подходящий дизайн, а заказ оформляется в знакомой карточке Ozon.</p>
 				<div class="hero-actions">
-					<a class="button button-primary" href="/catalog/">Смотреть каталог</a>
-					<a class="text-link" href="/about/">Как работает проект <span aria-hidden="true">→</span></a>
+					<a class="button button-primary" href="/catalog/">Выбрать дизайн</a>
+					<a class="text-link" href="#how-it-works">Как купить <span aria-hidden="true">↓</span></a>
 				</div>
+				<ul class="hero-facts" aria-label="Преимущества ArtBox World">
+					<li><strong>{allProducts.length}</strong><span>тематических страниц</span></li>
+					<li><strong>1 клик</strong><span>до карточки Ozon</span></li>
+					<li><strong>0</strong><span>новых аккаунтов</span></li>
+				</ul>
 			</div>
 			<div class="hero-art" aria-hidden="true">
 				<div class="poster poster-main"><span>ART</span><strong>BOX</strong></div>
@@ -52,38 +69,55 @@ const jsonLd = [
 				<p class="eyebrow">Выберите настроение</p>
 				<h2>Коллекции по интересам</h2>
 			</div>
-			<p>Один стиль — много способов сделать комнату своей.</p>
+			<p>Перейдите сразу к теме, которая вам близка.</p>
 		</div>
 		<div class="category-grid">
-			<CategoryCard title="Рок и музыка" description="Культовые образы, энергия сцены и музыка, которая остаётся с вами." label="Громче" tone="red" />
-			<CategoryCard title="Спорт" description="Цвета команды, дух трибун и символы, которые объединяют болельщиков." label="Вместе" tone="blue" />
-			<CategoryCard title="Мифология" description="Северные легенды, древние символы и истории о силе и пути." label="Легенды" tone="green" />
-			<CategoryCard title="Искусство" description="Выразительные сюжеты и визуальные акценты для современного интерьера." label="Взгляд" tone="amber" />
+			<CategoryCard href="/catalog/?category=rock" title="Рок и музыка" description="Группы, музыканты и образы, которые задают комнате громкое настроение." label="Громче" tone="red" />
+			<CategoryCard href="/catalog/?category=sport" title="Спорт" description="Флаги клубов и визуальные идеи для домашней зоны болельщика." label="Вместе" tone="blue" />
+			<CategoryCard href="/catalog/?category=mythology" title="Мифология" description="Северные сюжеты, викинги и фантазийные символы для выразительного интерьера." label="Легенды" tone="green" />
+			<CategoryCard href="/catalog/?category=art" title="Искусство" description="Картины, графика и тематические баннеры для заметного акцента на стене." label="Взгляд" tone="amber" />
 		</div>
 	</section>
 
 	{products.length > 0 && (
 		<section class="section shell">
 			<div class="section-heading">
-				<div><p class="eyebrow">Новое</p><h2>Свежие подборки</h2></div>
+				<div><p class="eyebrow">Добавлено недавно</p><h2>Новые дизайны</h2></div>
 				<a class="text-link" href="/catalog/">Весь каталог <span aria-hidden="true">→</span></a>
 			</div>
 			<div class="product-grid">
 				{products.map((product) => (
 					<a class="product-card" href={`/catalog/${product.id}/`}>
 						<img src={product.data.image} alt={product.data.imageAlt} loading="lazy" />
-						<div><h3>{product.data.title}</h3><p>{product.data.description}</p></div>
+						<div>
+							<p class="product-category">{product.data.category === 'rock' ? 'Рок и музыка' : product.data.category === 'sport' ? 'Спорт' : product.data.category === 'mythology' ? 'Мифология' : 'Искусство'}</p>
+							<h3>{product.data.title}</h3>
+							<p>{product.data.description}</p>
+							<span class="card-action">Подробнее и перейти на Ozon <span aria-hidden="true">→</span></span>
+						</div>
 					</a>
 				))}
 			</div>
 		</section>
 	)}
 
+	<section class="buy-steps section shell" id="how-it-works" aria-labelledby="steps-title">
+		<div class="section-heading">
+			<div><p class="eyebrow">Как это работает</p><h2 id="steps-title">От идеи до заказа — три шага</h2></div>
+			<p>ArtBox World не просит регистрироваться и не принимает оплату.</p>
+		</div>
+		<ol class="steps-grid">
+			<li><span>01</span><h3>Выберите тему</h3><p>Откройте рок, спорт, мифологию или искусство.</p></li>
+			<li><span>02</span><h3>Изучите дизайн</h3><p>Посмотрите изображение, описание и размер на нашей странице.</p></li>
+			<li><span>03</span><h3>Перейдите на Ozon</h3><p>Проверьте актуальную цену, наличие и оформите заказ на маркетплейсе.</p></li>
+		</ol>
+	</section>
+
 	<section class="manifesto">
 		<div class="shell manifesto-grid">
-			<p class="manifesto-number">03</p>
-			<div><p class="eyebrow">Просто и честно</p><h2>Мы помогаем найти идею. Покупка происходит на Ozon.</h2></div>
-			<p>Каждая опубликованная подборка ведёт на соответствующую карточку товара. Никаких отдельных аккаунтов и незнакомых способов оплаты.</p>
+			<p class="manifesto-number">OZ</p>
+			<div><p class="eyebrow">Просто и понятно</p><h2>Нашли дизайн? Проверьте предложение на Ozon.</h2></div>
+			<p>Цена, наличие, доставка и оплата всегда проверяются непосредственно в карточке соответствующего товара.</p>
 		</div>
 	</section>
 </BaseLayout>
