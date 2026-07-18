@@ -1,0 +1,77 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { themes, type ThemeKey } from '../../data/themes';
+
+export function getStaticPaths() {
+	return Object.entries(themes).map(([category, theme]) => ({
+		params: { category },
+		props: { category: category as ThemeKey, theme },
+	}));
+}
+
+const { category, theme } = Astro.props;
+const products = (await getCollection('products', ({ data }) => !data.draft && data.category === category))
+	.sort((a, b) => b.data.soldUnits - a.data.soldUnits || b.data.updatedAt.getTime() - a.data.updatedAt.getTime());
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const jsonLd = [
+	{
+		'@context': 'https://schema.org',
+		'@type': 'CollectionPage',
+		name: theme.title,
+		description: theme.description,
+		url: canonical,
+		inLanguage: 'ru-RU',
+	},
+	{
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'ArtBox World', item: 'https://artboxworld.com/' },
+			{ '@type': 'ListItem', position: 2, name: 'Каталог', item: 'https://artboxworld.com/catalog/' },
+			{ '@type': 'ListItem', position: 3, name: theme.name, item: canonical },
+		],
+	},
+	{
+		'@context': 'https://schema.org',
+		'@type': 'ItemList',
+		name: theme.title,
+		itemListElement: products.map((product, index) => ({
+			'@type': 'ListItem',
+			position: index + 1,
+			url: `https://artboxworld.com/catalog/${product.id}/`,
+			name: product.data.title,
+		})),
+	},
+];
+---
+
+<BaseLayout title={theme.seoTitle} description={theme.description} {jsonLd}>
+	<section class="page-hero shell theme-hero">
+		<nav class="breadcrumbs" aria-label="Хлебные крошки">
+			<a href="/">Главная</a><span aria-hidden="true">/</span><a href="/catalog/">Каталог</a><span aria-hidden="true">/</span><span>{theme.name}</span>
+		</nav>
+		<p class="eyebrow">{theme.label}</p>
+		<h1>{theme.title}</h1>
+		<p class="lead">{theme.intro}</p>
+	</section>
+
+	<section class="section shell" aria-labelledby="theme-products-title">
+		<div class="section-heading compact-heading">
+			<div><p class="eyebrow">{theme.name}</p><h2 id="theme-products-title">Выберите дизайн</h2></div>
+			<p>{products.length} {products.length === 1 ? 'подборка' : products.length < 5 ? 'подборки' : 'подборок'} по теме.</p>
+		</div>
+		{products.length > 0 ? (
+			<div class="product-grid">
+				{products.map((product) => (
+					<a class="product-card" href={`/catalog/${product.id}/`}>
+						<img src={product.data.image} alt={product.data.imageAlt} loading="lazy" />
+						<div><h3>{product.data.title}</h3><p>{product.data.description}</p><span class="card-action">Подробнее <span aria-hidden="true">→</span></span></div>
+					</a>
+				))}
+			</div>
+		) : (
+			<p class="filter-empty">Новые страницы по этой теме готовятся к публикации.</p>
+		)}
+	</section>
+</BaseLayout>

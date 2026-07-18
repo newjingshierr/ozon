@@ -2,12 +2,13 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CategoryCard from '../components/CategoryCard.astro';
+import { themes } from '../data/themes';
 
 const allProducts = (await getCollection('products', ({ data }) => !data.draft));
-const products = allProducts
-	.sort((a, b) => b.data.updatedAt.getTime() - a.data.updatedAt.getTime())
+const products = [...allProducts]
+	.sort((a, b) => b.data.soldUnits - a.data.soldUnits || b.data.updatedAt.getTime() - a.data.updatedAt.getTime())
 	.slice(0, 6);
-const description = 'Тематические флаги, постеры и картины для комнаты: рок, спорт, мифология и искусство. Подборки ArtBox World с прямым переходом к товарам на Ozon.';
+const description = 'Флаги 90×140 см, постеры и картины для комнаты: рок-группы, футбольные и хоккейные клубы, мифология и арт. Переход к товарам на Ozon.';
 const jsonLd = [
 	{
 		'@context': 'https://schema.org',
@@ -27,7 +28,7 @@ const jsonLd = [
 	{
 		'@context': 'https://schema.org',
 		'@type': 'ItemList',
-		name: 'Новые тематические подборки ArtBox World',
+		name: 'Популярные тематические подборки ArtBox World',
 		itemListElement: products.map((product, index) => ({
 			'@type': 'ListItem',
 			position: index + 1,
@@ -38,22 +39,23 @@ const jsonLd = [
 ];
 ---
 
-<BaseLayout title="ArtBox World — флаги, постеры и картины" {description} {jsonLd}>
+<BaseLayout title="Флаги, постеры и картины на стену — ArtBox World" {description} {jsonLd}>
 	<section class="hero">
 		<div class="shell hero-grid">
 			<div class="hero-copy">
-				<p class="eyebrow">Тематический декор с переходом на Ozon</p>
-				<h1>Флаги, постеры и картины <em>для вашей стены</em></h1>
-				<p class="lead">Выбирайте декор по любимой музыке, спорту, мифологии и искусству. Мы помогаем найти подходящий дизайн, а заказ оформляется в знакомой карточке Ozon.</p>
+				<p class="eyebrow">Тематический настенный декор</p>
+				<h1>Флаги, постеры и картины <em>для комнаты</em></h1>
+				<p class="lead">Каталог флагов 90×140 см, постеров и картин по любимым темам: рок-группы, футбол, хоккей, викинги и визуальное искусство. Изучите дизайн на ArtBox World и перейдите к соответствующему товару на Ozon.</p>
 				<div class="hero-actions">
-					<a class="button button-primary" href="/catalog/">Выбрать дизайн</a>
-					<a class="text-link" href="#how-it-works">Как купить <span aria-hidden="true">↓</span></a>
+					<a class="button button-primary" href="/catalog/">Смотреть весь каталог</a>
+					<a class="text-link" href="#themes">Выбрать тему <span aria-hidden="true">↓</span></a>
 				</div>
-				<ul class="hero-facts" aria-label="Преимущества ArtBox World">
-					<li><strong>{allProducts.length}</strong><span>тематических страниц</span></li>
-					<li><strong>1 клик</strong><span>до карточки Ozon</span></li>
-					<li><strong>0</strong><span>новых аккаунтов</span></li>
-				</ul>
+				<nav class="hero-topic-links" aria-label="Популярные темы">
+					<a href={themes.rock.href}>Флаги рок-групп</a>
+					<a href={themes.sport.href}>Футбол и хоккей</a>
+					<a href={themes.mythology.href}>Викинги и мифология</a>
+					<a href={themes.art.href}>Картины и постеры</a>
+				</nav>
 			</div>
 			<div class="hero-art" aria-hidden="true">
 				<div class="poster poster-main"><span>ART</span><strong>BOX</strong></div>
@@ -63,26 +65,26 @@ const jsonLd = [
 		</div>
 	</section>
 
-	<section class="section shell">
+	<section class="section shell" id="themes">
 		<div class="section-heading">
 			<div>
-				<p class="eyebrow">Выберите настроение</p>
-				<h2>Коллекции по интересам</h2>
+				<p class="eyebrow">Каталог по темам</p>
+				<h2>Флаги и декор по интересам</h2>
 			</div>
-			<p>Перейдите сразу к теме, которая вам близка.</p>
+			<p>Каждая тема открывается отдельной страницей с подходящими товарами.</p>
 		</div>
 		<div class="category-grid">
-			<CategoryCard href="/catalog/?category=rock" title="Рок и музыка" description="Группы, музыканты и образы, которые задают комнате громкое настроение." label="Громче" tone="red" />
-			<CategoryCard href="/catalog/?category=sport" title="Спорт" description="Флаги клубов и визуальные идеи для домашней зоны болельщика." label="Вместе" tone="blue" />
-			<CategoryCard href="/catalog/?category=mythology" title="Мифология" description="Северные сюжеты, викинги и фантазийные символы для выразительного интерьера." label="Легенды" tone="green" />
-			<CategoryCard href="/catalog/?category=art" title="Искусство" description="Картины, графика и тематические баннеры для заметного акцента на стене." label="Взгляд" tone="amber" />
+			<CategoryCard href={themes.rock.href} title={themes.rock.name} description="Флаги рок-групп, музыканты и музыкальные образы для комнаты или домашней студии." label={themes.rock.label} tone={themes.rock.tone} />
+			<CategoryCard href={themes.sport.href} title={themes.sport.name} description="Флаги футбольных и хоккейных клубов для комнаты болельщика и домашней фан-зоны." label={themes.sport.label} tone={themes.sport.tone} />
+			<CategoryCard href={themes.mythology.href} title={themes.mythology.name} description="Флаги с викингами, воинами и мифологическими сюжетами для тематического интерьера." label={themes.mythology.label} tone={themes.mythology.tone} />
+			<CategoryCard href={themes.art.href} title={themes.art.name} description="Картины, постеры, графика и тематические баннеры для заметного акцента на стене." label={themes.art.label} tone={themes.art.tone} />
 		</div>
 	</section>
 
 	{products.length > 0 && (
 		<section class="section shell">
 			<div class="section-heading">
-				<div><p class="eyebrow">Добавлено недавно</p><h2>Новые дизайны</h2></div>
+				<div><p class="eyebrow">Что посмотреть сначала</p><h2>Популярные флаги и картины</h2></div>
 				<a class="text-link" href="/catalog/">Весь каталог <span aria-hidden="true">→</span></a>
 			</div>
 			<div class="product-grid">
@@ -101,23 +103,23 @@ const jsonLd = [
 		</section>
 	)}
 
-	<section class="buy-steps section shell" id="how-it-works" aria-labelledby="steps-title">
+	<section class="buy-steps section shell" id="how-to-choose" aria-labelledby="guide-title">
 		<div class="section-heading">
-			<div><p class="eyebrow">Как это работает</p><h2 id="steps-title">От идеи до заказа — три шага</h2></div>
-			<p>ArtBox World не просит регистрироваться и не принимает оплату.</p>
+			<div><p class="eyebrow">Полезно перед заказом</p><h2 id="guide-title">Как выбрать настенный декор</h2></div>
+			<p>Основные характеристики и актуальное предложение всегда проверяйте в карточке продавца.</p>
 		</div>
 		<ol class="steps-grid">
-			<li><span>01</span><h3>Выберите тему</h3><p>Откройте рок, спорт, мифологию или искусство.</p></li>
-			<li><span>02</span><h3>Изучите дизайн</h3><p>Посмотрите изображение, описание и размер на нашей странице.</p></li>
-			<li><span>03</span><h3>Перейдите на Ozon</h3><p>Проверьте актуальную цену, наличие и оформите заказ на маркетплейсе.</p></li>
+			<li><span>01</span><h3>Флаг на стену</h3><p>До покупки отметьте на стене заявленный размер. Для моделей 90×140 см нужен свободный участок, чтобы рисунок и надпись не перекрывались мебелью.</p></li>
+			<li><span>02</span><h3>Постер или картина</h3><p>Сравните пропорции изображения, цветовую гамму и сюжет с интерьером. Фактический вид оценивайте по фотографиям соответствующего товара.</p></li>
+			<li><span>03</span><h3>Проверка на Ozon</h3><p>Перейдите по ссылке со страницы товара и уточните цену, наличие, комплектацию, доставку и условия возврата непосредственно на Ozon.</p></li>
 		</ol>
 	</section>
 
 	<section class="manifesto">
 		<div class="shell manifesto-grid">
-			<p class="manifesto-number">OZ</p>
-			<div><p class="eyebrow">Просто и понятно</p><h2>Нашли дизайн? Проверьте предложение на Ozon.</h2></div>
-			<p>Цена, наличие, доставка и оплата всегда проверяются непосредственно в карточке соответствующего товара.</p>
+			<p class="manifesto-number" aria-hidden="true">→</p>
+			<div><p class="eyebrow">ArtBox World → Ozon</p><h2>Нашли подходящий дизайн? Перейдите к товару.</h2></div>
+			<p>ArtBox World помогает найти тематический декор. Покупка, оплата и доставка оформляются на стороне Ozon.</p>
 		</div>
 	</section>
 </BaseLayout>
