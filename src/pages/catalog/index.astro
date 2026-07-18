@@ -1,0 +1,34 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const products = await getCollection('products', ({ data }) => !data.draft);
+const description = 'Каталог тематических флагов, постеров и картин ArtBox World с переходом к товарам на Ozon.';
+---
+
+<BaseLayout title="Каталог флагов, постеров и картин" {description}>
+	<section class="page-hero shell">
+		<p class="eyebrow">ArtBox World</p>
+		<h1>Каталог</h1>
+		<p class="lead">Тематические идеи для стен — по музыке, спорту, мифологии и искусству.</p>
+	</section>
+	<section class="section shell">
+		{products.length ? (
+			<div class="product-grid">
+				{products.map((product) => (
+					<a class="product-card" href={`/catalog/${product.id}/`}>
+						<img src={product.data.image} alt={product.data.imageAlt} loading="lazy" />
+						<div><h2>{product.data.title}</h2><p>{product.data.description}</p></div>
+					</a>
+				))}
+			</div>
+		) : (
+			<div class="empty-state">
+				<p class="eyebrow">Скоро</p>
+				<h2>Первая коллекция готовится к публикации</h2>
+				<p>Мы добавляем изображения и проверяем ссылки на товары Ozon. Загляните немного позже.</p>
+				<a class="button button-secondary" href="/">Вернуться на главную</a>
+			</div>
+		)}
+	</section>
+</BaseLayout>

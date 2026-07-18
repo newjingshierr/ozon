@@ -1,0 +1,61 @@
+---
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+	description: string;
+	image?: string;
+	type?: 'website' | 'article';
+	noindex?: boolean;
+	jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const {
+	title,
+	description,
+	image = '/og-default.svg',
+	type = 'website',
+	noindex = false,
+	jsonLd,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image, Astro.site);
+const fullTitle = title.includes('ArtBox World') ? title : `${title} — ArtBox World`;
+---
+
+<!doctype html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<meta name="theme-color" content="#12100e" />
+		{noindex && <meta name="robots" content="noindex, nofollow" />}
+		<link rel="canonical" href={canonical} />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta property="og:locale" content="ru_RU" />
+		<meta property="og:type" content={type} />
+		<meta property="og:site_name" content="ArtBox World" />
+		<meta property="og:title" content={fullTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:image" content={socialImage} />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={fullTitle} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={socialImage} />
+		<title>{fullTitle}</title>
+		{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+	</head>
+	<body>
+		<a class="skip-link" href="#main">К содержанию</a>
+		<SiteHeader />
+		<main id="main"><slot /></main>
+		<SiteFooter />
+	</body>
+</html>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f5f0e8"/>
+  <rect x="70" y="70" width="1060" height="490" fill="#e9582b" stroke="#181512" stroke-width="8"/>
+  <circle cx="1040" cy="155" r="56" fill="#f1b735" stroke="#181512" stroke-width="8"/>
+  <text x="125" y="240" fill="#181512" font-family="Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="8">ART FOR YOUR SPACE</text>
+  <text x="115" y="430" fill="#181512" font-family="Arial, sans-serif" font-size="124" font-weight="900" letter-spacing="-10">ARTBOX WORLD</text>
+</svg>

@@ -1,0 +1,21 @@
+---
+interface Props {
+	title: string;
+	description: string;
+	label: string;
+	tone: 'amber' | 'red' | 'blue' | 'green';
+}
+
+const { title, description, label, tone } = Astro.props;
+---
+
+<article class:list={['category-card', `tone-${tone}`]}>
+	<div class="category-art" aria-hidden="true">
+		<span></span><span></span><span></span>
+	</div>
+	<div class="category-copy">
+		<p class="eyebrow">{label}</p>
+		<h3>{title}</h3>
+		<p>{description}</p>
+	</div>
+</article>

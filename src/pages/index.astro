@@ -1,0 +1,87 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+
+const products = (await getCollection('products', ({ data }) => !data.draft)).slice(0, 6);
+const description = 'Флаги, постеры и картины по мотивам музыки, спорта, мифологии и искусства. Подборки ArtBox World с переходом к товарам на Ozon.';
+const jsonLd = [
+	{
+		'@context': 'https://schema.org',
+		'@type': 'WebSite',
+		name: 'ArtBox World',
+		url: 'https://artboxworld.com/',
+		description,
+		inLanguage: 'ru-RU',
+	},
+	{
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: 'ArtBox World',
+		url: 'https://artboxworld.com/',
+		logo: 'https://artboxworld.com/favicon.svg',
+	},
+];
+---
+
+<BaseLayout title="ArtBox World — флаги, постеры и картины" {description} {jsonLd}>
+	<section class="hero">
+		<div class="shell hero-grid">
+			<div class="hero-copy">
+				<p class="eyebrow">Искусство для вашего пространства</p>
+				<h1>Стены, которые говорят <em>о вас</em></h1>
+				<p class="lead">Откройте коллекции флагов, постеров и картин по любимым темам — от рок-музыки до мифологии.</p>
+				<div class="hero-actions">
+					<a class="button button-primary" href="/catalog/">Смотреть каталог</a>
+					<a class="text-link" href="/about/">Как работает проект <span aria-hidden="true">→</span></a>
+				</div>
+			</div>
+			<div class="hero-art" aria-hidden="true">
+				<div class="poster poster-main"><span>ART</span><strong>BOX</strong></div>
+				<div class="poster poster-back"><span>MAKE</span><strong>SPACE</strong></div>
+				<div class="hero-stamp">01<br /><small>CURATED</small></div>
+			</div>
+		</div>
+	</section>
+
+	<section class="section shell">
+		<div class="section-heading">
+			<div>
+				<p class="eyebrow">Выберите настроение</p>
+				<h2>Коллекции по интересам</h2>
+			</div>
+			<p>Один стиль — много способов сделать комнату своей.</p>
+		</div>
+		<div class="category-grid">
+			<CategoryCard title="Рок и музыка" description="Культовые образы, энергия сцены и музыка, которая остаётся с вами." label="Громче" tone="red" />
+			<CategoryCard title="Спорт" description="Цвета команды, дух трибун и символы, которые объединяют болельщиков." label="Вместе" tone="blue" />
+			<CategoryCard title="Мифология" description="Северные легенды, древние символы и истории о силе и пути." label="Легенды" tone="green" />
+			<CategoryCard title="Искусство" description="Выразительные сюжеты и визуальные акценты для современного интерьера." label="Взгляд" tone="amber" />
+		</div>
+	</section>
+
+	{products.length > 0 && (
+		<section class="section shell">
+			<div class="section-heading">
+				<div><p class="eyebrow">Новое</p><h2>Свежие подборки</h2></div>
+				<a class="text-link" href="/catalog/">Весь каталог <span aria-hidden="true">→</span></a>
+			</div>
+			<div class="product-grid">
+				{products.map((product) => (
+					<a class="product-card" href={`/catalog/${product.id}/`}>
+						<img src={product.data.image} alt={product.data.imageAlt} loading="lazy" />
+						<div><h3>{product.data.title}</h3><p>{product.data.description}</p></div>
+					</a>
+				))}
+			</div>
+		</section>
+	)}
+
+	<section class="manifesto">
+		<div class="shell manifesto-grid">
+			<p class="manifesto-number">03</p>
+			<div><p class="eyebrow">Просто и честно</p><h2>Мы помогаем найти идею. Покупка происходит на Ozon.</h2></div>
+			<p>Каждая опубликованная подборка ведёт на соответствующую карточку товара. Никаких отдельных аккаунтов и незнакомых способов оплаты.</p>
+		</div>
+	</section>
+</BaseLayout>

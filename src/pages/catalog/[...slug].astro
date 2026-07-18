@@ -1,0 +1,48 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+	const products = await getCollection('products', ({ data }) => !data.draft);
+	return products.map((product) => ({ params: { slug: product.id }, props: { product } }));
+}
+
+const { product } = Astro.props;
+const { Content } = await render(product);
+const data = product.data;
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const jsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'Product',
+	name: data.title,
+	description: data.description,
+	image: new URL(data.image, Astro.site).toString(),
+	url: canonical,
+	offers: {
+		'@type': 'Offer',
+		url: data.ozonUrl,
+		availability: 'https://schema.org/InStock',
+	},
+};
+---
+
+<BaseLayout title={data.title} description={data.description} image={data.image} type="article" {jsonLd}>
+	<article class="product-page shell">
+		<a class="back-link" href="/catalog/">← Все подборки</a>
+		<div class="product-hero">
+			<div class="product-image"><img src={data.image} alt={data.imageAlt} /></div>
+			<div class="product-intro">
+				<p class="eyebrow">ArtBox World</p>
+				<h1>{data.title}</h1>
+				<p class="lead">{data.description}</p>
+				<a class="button button-primary" href={data.ozonUrl} target="_blank" rel="sponsored noopener">Посмотреть на Ozon <span aria-hidden="true">↗</span></a>
+				<p class="microcopy">Покупка и доставка оформляются на сайте Ozon.</p>
+			</div>
+		</div>
+		<div class="article-body"><Content /></div>
+		<div class="product-cta">
+			<div><p class="eyebrow">Готово к заказу</p><h2>Добавьте характер вашему пространству</h2></div>
+			<a class="button button-secondary" href={data.ozonUrl} target="_blank" rel="sponsored noopener">Перейти на Ozon ↗</a>
+		</div>
+	</article>
+</BaseLayout>
