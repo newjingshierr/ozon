@@ -15,6 +15,8 @@ const products = defineCollection({
 		sellerSku: z.string().optional(),
 		sourceKey: z.string().optional(),
 		sourceType: z.enum(['order', 'published']).optional(),
+		contentMode: z.enum(['model']).optional(),
+		modelBatch: z.string().optional(),
 		soldUnits: z.number().int().nonnegative(),
 		keywords: z.array(z.string()).default([]),
 		updatedAt: z.coerce.date(),
