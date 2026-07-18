@@ -2,7 +2,7 @@
 title: "Флаг ХК Локомотив 90×140 см — двусторонний баннер"
 description: "Большой двусторонний флаг «ХК Локомотив» 90×140 см для комнаты болельщика, домашней фан-зоны или тематического подарка."
 category: sport
-image: "/images/products/flag-hk-lokomotiv.jpg"
+image: "/images/products/flag-hk-lokomotiv-3534909445.jpg"
 imageAlt: "Чёрный двусторонний флаг ХК Локомотив с красно-синим хоккейным знаком"
 ozonUrl: "https://www.ozon.ru/product/3534909445/"
 shopName: "suzhou 旗帜2店"
