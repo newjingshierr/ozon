@@ -9,9 +9,29 @@ if str(AUTOMATION_ROOT) not in sys.path:
     sys.path.insert(0, str(AUTOMATION_ROOT))
 
 from content_generator import normalize_keyword, slugify, validate_model_page
+from erp_reader import ProductCandidate
+from run import candidate_fingerprint, skip_decision_is_active
 
 
 class ContentGeneratorTests(unittest.TestCase):
+    def test_persistent_skip_decisions(self) -> None:
+        candidate = ProductCandidate(
+            source_type="order", source_key="order:test:123", shop_id=None,
+            shop_name="test", seller_sku="sku", product_id="123",
+            product_title="Флаг Хаски", image_url="https://example.com/a.jpg",
+            sold_units=1, last_order_at="2026-01-01",
+        )
+        fingerprint = candidate_fingerprint(candidate)
+        self.assertTrue(skip_decision_is_active(candidate, {
+            candidate.source_key: {"disposition": "ignore", "fingerprint": "old"}
+        }))
+        self.assertTrue(skip_decision_is_active(candidate, {
+            candidate.source_key: {"disposition": "review", "fingerprint": fingerprint}
+        }))
+        self.assertFalse(skip_decision_is_active(candidate, {
+            candidate.source_key: {"disposition": "review", "fingerprint": "old"}
+        }))
+
     def test_slug_transliterates_and_is_stable(self) -> None:
         self.assertEqual(slugify("Спартак Москва", "123"), "spartak-moskva")
         self.assertEqual(slugify("AC/DC", "123"), "ac-dc")

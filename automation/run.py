@@ -39,6 +39,7 @@ DATA_ROOT = AUTOMATION_ROOT / "data"
 INPUT_PATH = DATA_ROOT / "model_input.json"
 OUTPUT_PATH = DATA_ROOT / "model_output.json"
 REVIEW_PATH = DATA_ROOT / "review_queue.json"
+SKIP_REGISTRY_PATH = DATA_ROOT / "skip_registry.json"
 PENDING_PATH = DATA_ROOT / "pending_publish.json"
 
 
@@ -145,16 +146,79 @@ def candidate_dict(candidate: ProductCandidate, action: str, existing: dict[str,
     }
 
 
+def product_fingerprint(product_id: str, title: str, image_url: str) -> str:
+    """Identify the product information that can make a review decision stale."""
+    payload = "\n".join((str(product_id), str(title).strip(), str(image_url).strip()))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def candidate_fingerprint(candidate: ProductCandidate) -> str:
+    return product_fingerprint(candidate.product_id, candidate.product_title, candidate.image_url)
+
+
+def item_fingerprint(item: dict[str, Any]) -> str:
+    return product_fingerprint(
+        str(item.get("product_id") or ""),
+        str(item.get("original_product_title") or ""),
+        str(item.get("image_url") or ""),
+    )
+
+
+def load_skip_registry(candidates: list[ProductCandidate] | None = None) -> dict[str, dict[str, Any]]:
+    """Load persistent skip decisions and migrate the former one-batch review file."""
+    stored = load_json(SKIP_REGISTRY_PATH, {})
+    entries = stored.get("items", []) if isinstance(stored, dict) else []
+    registry = {str(entry.get("source_key")): entry for entry in entries if entry.get("source_key")}
+    if registry or not candidates:
+        return registry
+
+    legacy = load_json(REVIEW_PATH, {})
+    legacy_items = legacy.get("items", []) if isinstance(legacy, dict) else []
+    by_source = {candidate.source_key: candidate for candidate in candidates}
+    for entry in legacy_items:
+        source_key = str(entry.get("source_key") or "")
+        candidate = by_source.get(source_key)
+        if not source_key or not candidate:
+            continue
+        reason = str(entry.get("reason") or "历史跳过记录")
+        # Old records had no explicit type. Preserve ambiguous items for review;
+        # treat the remaining duplicate/already-published decisions as ignored.
+        lowered = reason.casefold()
+        disposition = "review" if "неоднознач" in lowered or "без дополнительных данных" in lowered else "ignore"
+        registry[source_key] = {
+            "source_key": source_key,
+            "disposition": disposition,
+            "reason": reason,
+            "fingerprint": candidate_fingerprint(candidate),
+            "updated_at": datetime.now().isoformat(),
+        }
+    if registry:
+        atomic_json(SKIP_REGISTRY_PATH, {"version": 1, "items": list(registry.values())})
+    return registry
+
+
+def skip_decision_is_active(candidate: ProductCandidate, registry: dict[str, dict[str, Any]]) -> bool:
+    decision = registry.get(candidate.source_key)
+    if not decision:
+        return False
+    if decision.get("disposition") == "ignore":
+        return True
+    return str(decision.get("fingerprint") or "") == candidate_fingerprint(candidate)
+
+
 def prepare_batch(config: dict[str, Any], limit: int) -> int:
     site_root = Path(config["site_root"]).resolve()
     reader = ErpReader(Path(config["erp_root"]).resolve())
     candidates = reader.ordered_products() + reader.successfully_published_products()
     by_product, source_keys, _ = existing_pages(site_root)
+    skip_registry = load_skip_registry(candidates)
     items: list[dict[str, Any]] = []
     seen: set[str] = set()
 
     # First rewrite pages previously created by the retired fixed template.
     for candidate in candidates:
+        if skip_decision_is_active(candidate, skip_registry):
+            continue
         existing = by_product.get(candidate.product_id)
         if existing and existing.get("sourceKey") and existing.get("contentMode") != "model":
             items.append(candidate_dict(candidate, "rewrite", existing))
@@ -165,6 +229,8 @@ def prepare_batch(config: dict[str, Any], limit: int) -> int:
     # Then add genuinely new products.
     if len(items) < limit:
         for candidate in candidates:
+            if skip_decision_is_active(candidate, skip_registry):
+                continue
             if candidate.product_id in by_product or candidate.source_key in source_keys or candidate.product_id in seen:
                 continue
             items.append(candidate_dict(candidate, "new"))
@@ -198,6 +264,7 @@ def prepare_batch(config: dict[str, Any], limit: int) -> int:
                     "source_key": "copy exactly",
                     "status": "publish or skip",
                     "skip_reason": "required only when status=skip",
+                    "skip_type": "ignore for a definite duplicate/unsuitable item; review when better source data could make it publishable",
                     "primary_keyword": "one natural Russian search phrase",
                     "title": "unique SEO title",
                     "description": "unique meta description",
@@ -266,6 +333,8 @@ def finalize_batch(config: dict[str, Any], publish: bool) -> int:
     batch_keywords: set[str] = set()
     review: list[dict[str, str]] = []
     changes: list[str] = []
+    published_pages = 0
+    skip_registry = load_skip_registry()
 
     for item in input_data.get("items", []):
         source_key = str(item["source_key"])
@@ -273,7 +342,17 @@ def finalize_batch(config: dict[str, Any], publish: bool) -> int:
         if not raw:
             raise ValueError(f"模型漏掉了 {source_key}")
         if raw.get("status") == "skip":
-            review.append({"source_key": source_key, "reason": str(raw.get("skip_reason") or "模型跳过")})
+            reason = str(raw.get("skip_reason") or "模型跳过")
+            disposition = str(raw.get("skip_type") or "review")
+            if disposition not in {"ignore", "review"}:
+                raise ValueError(f"无效的 skip_type：{source_key}")
+            skip_registry[source_key] = {
+                "source_key": source_key,
+                "disposition": disposition,
+                "reason": reason,
+                "fingerprint": item_fingerprint(item),
+                "updated_at": datetime.now().isoformat(),
+            }
             continue
         page: ModelPage = validate_model_page(raw, source_key)
         keyword_key = normalize_keyword(page.primary_keyword)
@@ -315,7 +394,15 @@ def finalize_batch(config: dict[str, Any], publish: bool) -> int:
         content_target = site_root / "src/content/products" / f"{slug}.md"
         content_target.write_text(markdown, encoding="utf-8", newline="\n")
         changes.append(str(content_target.relative_to(site_root)).replace("\\", "/"))
+        published_pages += 1
+        skip_registry.pop(source_key, None)
 
+    registry_items = list(skip_registry.values())
+    atomic_json(SKIP_REGISTRY_PATH, {"version": 1, "items": registry_items})
+    review = [
+        {"source_key": str(entry["source_key"]), "reason": str(entry.get("reason") or "模型跳过")}
+        for entry in registry_items if entry.get("disposition") == "review"
+    ]
     atomic_json(REVIEW_PATH, {"updated_at": datetime.now().isoformat(), "items": review})
     changes = list(dict.fromkeys(changes))
     atomic_json(PENDING_PATH, {"batch_id": input_data["batch_id"], "paths": changes})
@@ -323,10 +410,11 @@ def finalize_batch(config: dict[str, Any], publish: bool) -> int:
         run_command(["npm.cmd", "run", "build"], site_root)
     if publish and changes:
         run_command(["git", "add", "--", *changes], site_root)
-        run_command(["git", "commit", "-m", f"Publish {len(input_data['items'])} model-written SEO pages"], site_root)
+        run_command(["git", "commit", "-m", f"Publish {published_pages} model-written SEO pages"], site_root)
         run_command(["git", "push", config.get("git_remote", "origin"), config.get("git_branch", "main")], site_root)
         PENDING_PATH.unlink(missing_ok=True)
-    print(json.dumps({"batch_id": input_data["batch_id"], "changed_files": len(changes), "skipped": len(review), "published": bool(publish and changes)}, ensure_ascii=False))
+    current_skipped = sum(1 for item in input_data.get("items", []) if raw_outputs[str(item["source_key"])].get("status") == "skip")
+    print(json.dumps({"batch_id": input_data["batch_id"], "changed_files": len(changes), "published_pages": published_pages, "skipped": current_skipped, "review_queue": len(review), "published": bool(publish and changes)}, ensure_ascii=False))
     return 0
 
 
